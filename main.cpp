@@ -46,6 +46,7 @@ namespace top
 
 int main() {
   using namespace top;
+  int err = 0;
   IDraw  * f[3] = {}; // массив фигур 
   char * can = nullptr; //канвас 
   p_t * p = nullptr; 
@@ -60,7 +61,7 @@ int main() {
     paint_canvas(can, fo, p, s, '*');
     print_canvas(can, fo);
   } catch (...) {
-    bool err = 1;
+    err = 1;
   }
   delete f[0];
   delete f[1];
