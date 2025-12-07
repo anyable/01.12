@@ -1,66 +1,99 @@
 #include <iostream>
 namespace top
 {
-    struct IDraw {
+  struct p_t
+  {
+    int x, y;
+  };
+
+  struct IDraw //абстрактный класс
+  {
     virtual p_t begin() const = 0;
     virtual p_t next(p_t) const = 0;
   };
 
-  bool operator==(p_t a, p_t b) {
+  bool operator==(p_t a, p_t b)
+  {
     return a.x == b.x && a.y == b.y;
   }
-  bool operator !=(p_t a, p_t b) {
+
+  bool operator!=(p_t a, p_t b)
+  {
     return !(a == b);
   }
-  struct p_t {
-    int x, y;
-  };
+
+
+
   struct Dot: IDraw {
-    p_t begin() const override;
-    p_t next(p_t) const override;
+    p_t begin() const override; //центр фигуры
+    p_t next(p_t) const override; //следущая точка
     p_t o;
     Dot(int x, int y);
   };
-  top::Dot::Dot(int x, int y):
-    IDraw(), 
+
+  struct frame_t
+  {
+    p_t left_bot; //левая граница
+    p_t right_top; //правая граница
+  };
+
+  struct VSeg
+  {
+    int x;
+    int up_y;
+    int down_y;
+  };
+
+  struct HSeg
+  {
+    int y;
+    int left_x;
+    int right_x;
+  };
+
+  void make_f(IDraw ** b, size_t k); //выделяем память под фигуры и записываем туда центры
+  void get_points(IDraw * b, p_t ** ps, size_t & s); //будет расширять массив точек
+  frame_t build_frame(const p_t * ps, size_t s); // макс и мин точки под рамку
+  char * build_canvas(frame_t f); //выделяем память под канвас
+  void paint_canvas(char * cnv, frame_t r, const p_t * ps, size_t k, char f); //перевести координаты точек в канвас
+  void print_canvas(const char * cnv, frame_t fr); //вывод канваса, то есть двумерной матрицы
+}
+top::Dot::Dot(int x, int y): // конструктор создает центр?
+    IDraw(),
     o{x, y}
     {}
-  top::p_t top::Dot::begin() const {
-    return o;
-  }
-  top::p_t top::Dot::next(p_t) const {
-    return begin();
-  }
-  struct frame_t {
-    p_t left_bot;
-    p_t right_top;
-  };
-  void make_f(IDraw ** b, size_t k);
-  void get_points(IDraw * b, p_t ** ps, size_t & s); //будет расширять массив точек 
-  frame_t build_frame(const p_t * ps, size_t s);
-  char * build_canvas(frame_t f);
-  void paint_canvas(char * cnv, frame_t r, const p_t * ps, size_t k, char f); //перевести координаты точек в канвас 
-  void print_canvas(const char * cnv, frame_t fr);
+
+top::p_t top::Dot::begin() const
+{
+  return o;
 }
 
+top::p_t top::Dot::next(p_t) const
+{
+  return begin();
+}
 
 int main() {
   using namespace top;
   int err = 0;
-  IDraw  * f[3] = {}; // массив фигур 
-  char * can = nullptr; //канвас 
-  p_t * p = nullptr; 
+  IDraw  * f[3] = {}; // массив фигур
+  char * can = nullptr; //канвас на котором будут фигуры
+  p_t * p = nullptr;
   size_t s = 0;
-  try {
+  try
+  {
     make_f(f, 3);
-    for (size_t i = 0; i < 3; ++i) {
+    for (size_t i = 0; i < 3; ++i)
+    {
       get_points(f[i], &p, s);
     }
-    frame_t fo = build_frame(p, s);
-    can = build_canvas(fo);
+    frame_t fo = build_frame(p, s); //рамка
+    can = build_canvas(fo); //канвас
     paint_canvas(can, fo, p, s, '*');
     print_canvas(can, fo);
-  } catch (...) {
+  }
+  catch (...)
+  {
     err = 1;
   }
   delete f[0];
