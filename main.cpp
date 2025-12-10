@@ -37,34 +37,97 @@ namespace top
     p_t bb; //правая граница
   };
 
-  struct VSeg
+  struct VSeg : IDraw
   {
-    int x;
-    int up_y;
-    int down_y;
+    p_t begin() const override;
+    p_t next(p_t) const override;
+    p_t begg;
+    size_t lenn;
+    VSeg(p_t, size_t);
   };
 
-  struct HSeg
+  struct HSeg : IDraw
   {
-    int y;
-    int left_x;
-    int right_x;
+    p_t begin() const override;
+    p_t next(p_t) const override;
+    p_t beg;
+    size_t len;
+    HSeg(p_t, size_t);
+  };
+
+  struct DSeg : IDraw
+  {
+    p_t begin() const override;
+    p_t next(p_t) const override;
+    p_t beggg;
+    size_t lennn;
+    DSeg(p_t, size_t);
   };
 
   void make_f(IDraw ** b, size_t k); //выделяем память под фигуры и создаем точки через конструктор, то есть центры
-
   void get_points(const IDraw & d, p_t ** pts, size_t & s); //будет расширять массив точек
-
   frame_t build_frame(const p_t * ps, size_t s); // макс и мин точки под рамку
-
   char * build_canvas(frame_t f, char fill); //выделяем память под канвас
-
   void paint_canvas(char * cnv, frame_t fr, p_t p, char fill); //перевести координаты точек в канвас
-
   void print_canvas(std::ostream & os, const char * cnv, frame_t fr); //вывод канваса, то есть двумерной матрицы
-
-  void extend(p_t ** pts, size_t s, p_t p); //расширение массива 
+  void extend(p_t ** pts, size_t s, p_t p); //расширение массива
 }
+
+top::DSeg::DSeg(p_t a, size_t b):
+  beggg(a), lennn(b)
+  {}
+
+top::p_t top::DSeg::begin() const
+{
+  return beggg;
+}
+
+top::p_t top::DSeg::next(p_t a) const
+{
+  if (a.x + 1 == beggg.x + lennn && a.y + 1 == beggg.y + lennn)
+  {
+    return begin();
+  }
+  return {a.x + 1, a.y + 1};
+}
+
+top::p_t top::VSeg::begin() const
+{
+  return begg;
+}
+
+top::p_t top::VSeg::next(p_t a) const
+{
+  if (a.y + 1 == begg.y + lenn)
+  {
+    return begin();
+  }
+  return {a.x, a.y + 1};
+}
+
+top::VSeg::VSeg(p_t a, size_t b):
+  begg(a), lenn(b)
+  {}
+
+top::HSeg::HSeg(p_t a, size_t b):
+  beg(a), len(b)
+  {}
+
+top::p_t top::HSeg::begin() const
+{
+  return beg;
+}
+
+top::p_t top::HSeg::next(p_t a) const
+{
+  if (a.x + 1 == beg.x + len)
+  {
+    return begin();
+  }
+  return {a.x + 1, a.y};
+}
+
+
 top::Dot::Dot(int x, int y): // конструктор создает центр
     IDraw(),
     o{x, y}
@@ -82,9 +145,9 @@ top::p_t top::Dot::next(p_t) const
 
 void top::make_f(IDraw ** b, size_t k)
 {
-  b[0] = new Dot(0, 0);
-  b[1] = new Dot(-1, -5);
-  b[2] = new Dot(7, 7);
+  b[0] = new HSeg({0, 0}, 4);
+  b[1] = new VSeg({5, -3}, 6);
+  b[2] = new DSeg({-12, 3}, 9);
 }
 
 void top::extend(p_t ** pts, size_t s, p_t p)
@@ -101,7 +164,7 @@ void top::extend(p_t ** pts, size_t s, p_t p)
 
 void top::get_points(const IDraw & d, p_t ** pts, size_t & s)
 {
-  p_t p = d.begin(); //центр фигуры
+  p_t p = d.begin(); //начало
   extend(pts, s, p);
   size_t delta = 1;
   while (d.next(p) != d.begin())
@@ -194,10 +257,10 @@ int main()
       get_points(*(f[i]), &p, s);
     }
     frame_t fo = build_frame(p, s); //рамка
-    can = build_canvas(fo, '*'); //канвас
+    can = build_canvas(fo, '.'); //канвас
     for (size_t i = 0; i < s; ++i)
     {
-      paint_canvas(can, fo, p[i], '.');
+      paint_canvas(can, fo, p[i], '@');
     }
     print_canvas(std::cout, can, fo);
   }
