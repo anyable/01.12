@@ -71,7 +71,12 @@ namespace top
     p_t beg_;
     int widht_;
     int hight_;
-    Rectangle(p_t, size_t, size_t);
+    Rectangle(p_t, int, int);
+  };
+
+  struct Square : Rectangle
+  {
+    Square(p_t, int);
   };
 
   void make_f(IDraw ** b, size_t k); //выделяем память под фигуры и создаем точки через конструктор, то есть центры
@@ -82,6 +87,10 @@ namespace top
   void print_canvas(std::ostream & os, const char * cnv, frame_t fr); //вывод канваса, то есть двумерной матрицы
   void extend(p_t ** pts, size_t s, p_t p); //расширение массива
 }
+
+top::Square::Square(p_t begin, int len):
+  Rectangle(begin, len, len)
+  {}
 
 top::p_t top::Rectangle::next(p_t p) const
 {
@@ -113,9 +122,14 @@ top::p_t top::Rectangle::begin() const
   return beg_;
 }
 
-top::Rectangle::Rectangle(p_t begin, size_t weight, size_t hight):
+top::Rectangle::Rectangle(p_t begin, int weight, int hight):
   IDraw(), beg_(begin), widht_(weight), hight_(hight)
-  {}
+  {
+    if (weight <= 0 || hight <= 0)
+    {
+      throw std::logic_error("");
+    }
+  }
 
 top::DSeg::DSeg(p_t a, size_t b):
   beggg(a), lennn(b)
@@ -171,7 +185,6 @@ top::p_t top::HSeg::next(p_t a) const
   return {a.x + 1, a.y};
 }
 
-
 top::Dot::Dot(int x, int y): // конструктор создает центр
     IDraw(),
     o{x, y}
@@ -190,7 +203,7 @@ top::p_t top::Dot::next(p_t) const
 void top::make_f(IDraw ** b, size_t k)
 {
   b[0] = new HSeg({0, 0}, 4);
-  b[1] = new VSeg({5, -3}, 6);
+  b[1] = new Square({13, -7}, 8);
   b[2] = new Rectangle({-12, 3}, 9, 12);
 }
 
