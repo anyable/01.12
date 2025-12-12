@@ -64,6 +64,16 @@ namespace top
     DSeg(p_t, size_t);
   };
 
+  struct Rectangle : IDraw
+  {
+    p_t begin() const override;
+    p_t next(p_t) const override;
+    p_t beg_;
+    int widht_;
+    int hight_;
+    Rectangle(p_t, size_t, size_t);
+  };
+
   void make_f(IDraw ** b, size_t k); //выделяем память под фигуры и создаем точки через конструктор, то есть центры
   void get_points(const IDraw & d, p_t ** pts, size_t & s); //будет расширять массив точек
   frame_t build_frame(const p_t * ps, size_t s); // макс и мин точки под рамку
@@ -72,6 +82,40 @@ namespace top
   void print_canvas(std::ostream & os, const char * cnv, frame_t fr); //вывод канваса, то есть двумерной матрицы
   void extend(p_t ** pts, size_t s, p_t p); //расширение массива
 }
+
+top::p_t top::Rectangle::next(p_t p) const
+{
+  p_t upLeft = {beg_.x, beg_.y + hight_ - 1};
+  p_t downLeft = beg_;
+  p_t upRight = {beg_.x + widht_ - 1, beg_.y + hight_ - 1};
+  p_t downRight = {beg_.x + widht_ - 1, beg_.y};
+  if (p.x - 1 == downLeft.x && p.y == downLeft.y)
+  {
+    return begin();
+  }
+  else if (p.x == upLeft.x && p.y < upLeft.y)
+  {
+    return {p.x, p.y + 1};
+  }
+  else if ((p == upLeft) || (p.y == upRight.y && p.x < upRight.x))
+  {
+    return {p.x + 1, p.y};
+  }
+  else if ((p == upRight) || (p.x == downRight.x && p.y > downRight.y))
+  {
+    return {p.x, p.y - 1};
+  }
+  return {p.x - 1, p.y};
+}
+
+top::p_t top::Rectangle::begin() const
+{
+  return beg_;
+}
+
+top::Rectangle::Rectangle(p_t begin, size_t weight, size_t hight):
+  IDraw(), beg_(begin), widht_(weight), hight_(hight)
+  {}
 
 top::DSeg::DSeg(p_t a, size_t b):
   beggg(a), lennn(b)
@@ -147,7 +191,7 @@ void top::make_f(IDraw ** b, size_t k)
 {
   b[0] = new HSeg({0, 0}, 4);
   b[1] = new VSeg({5, -3}, 6);
-  b[2] = new DSeg({-12, 3}, 9);
+  b[2] = new Rectangle({-12, 3}, 9, 12);
 }
 
 void top::extend(p_t ** pts, size_t s, p_t p)
@@ -275,11 +319,3 @@ int main()
   delete [] can;
   return err;
 }
-
-
-
-
-
-
-
-
