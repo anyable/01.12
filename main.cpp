@@ -1,51 +1,11 @@
 #include <iostream>
+#include "geom.hpp"
+#include "idraw.hpp"
+#include "dot.hpp"
+#include "vseg.hpp"
+#include "canvac.hpp"
 namespace top
 {
-  struct p_t //точка
-  {
-    int x, y;
-  };
-
-  struct IDraw //абстрактный класс, для рисования
-  {
-    virtual ~IDraw() = default;
-    virtual p_t begin() const = 0;
-    virtual p_t next(p_t) const = 0;
-  };
-
-  bool operator==(p_t a, p_t b)
-  {
-    return a.x == b.x && a.y == b.y;
-  }
-
-  bool operator!=(p_t a, p_t b)
-  {
-    return !(a == b);
-  }
-
-  struct Dot: IDraw { //точка для рисования
-    p_t begin() const override; //центр фигуры
-    p_t next(p_t) const override; //следущая точка
-    p_t o;
-    explicit Dot(p_t dd); //конструктор из точки
-    Dot(int x, int y); //конструктор из 2 координат
-  };
-
-  struct frame_t
-  {
-    p_t aa; //левая граница
-    p_t bb; //правая граница
-  };
-
-  struct VSeg : IDraw
-  {
-    p_t begin() const override;
-    p_t next(p_t) const override;
-    p_t begg;
-    size_t lenn;
-    VSeg(p_t, size_t);
-  };
-
   struct HSeg : IDraw
   {
     p_t begin() const override;
@@ -80,12 +40,6 @@ namespace top
   };
 
   void make_f(IDraw ** b, size_t k); //выделяем память под фигуры и создаем точки через конструктор, то есть центры
-  void get_points(const IDraw & d, p_t ** pts, size_t & s); //будет расширять массив точек
-  frame_t build_frame(const p_t * ps, size_t s); // макс и мин точки под рамку
-  char * build_canvas(frame_t f, char fill); //выделяем память под канвас
-  void paint_canvas(char * cnv, frame_t fr, p_t p, char fill); //перевести координаты точек в канвас
-  void print_canvas(std::ostream & os, const char * cnv, frame_t fr); //вывод канваса, то есть двумерной матрицы
-  void extend(p_t ** pts, size_t s, p_t p); //расширение массива
 }
 
 top::Square::Square(p_t begin, int len):
@@ -149,24 +103,6 @@ top::p_t top::DSeg::next(p_t a) const
   return {a.x + 1, a.y + 1};
 }
 
-top::p_t top::VSeg::begin() const
-{
-  return begg;
-}
-
-top::p_t top::VSeg::next(p_t a) const
-{
-  if (a.y + 1 == begg.y + lenn)
-  {
-    return begin();
-  }
-  return {a.x, a.y + 1};
-}
-
-top::VSeg::VSeg(p_t a, size_t b):
-  begg(a), lenn(b)
-  {}
-
 top::HSeg::HSeg(p_t a, size_t b):
   beg(a), len(b)
   {}
@@ -185,118 +121,12 @@ top::p_t top::HSeg::next(p_t a) const
   return {a.x + 1, a.y};
 }
 
-top::Dot::Dot(int x, int y): // конструктор создает центр
-    IDraw(),
-    o{x, y}
-    {}
-
-top::p_t top::Dot::begin() const
-{
-  return o;
-}
-
-top::p_t top::Dot::next(p_t) const
-{
-  return begin();
-}
-
 void top::make_f(IDraw ** b, size_t k)
 {
   b[0] = new HSeg({0, 0}, 4);
   b[1] = new Square({13, -7}, 8);
   b[2] = new Rectangle({-12, 3}, 9, 12);
 }
-
-void top::extend(p_t ** pts, size_t s, p_t p)
-{
-  p_t * res = new p_t[s + 1];
-  for (size_t i = 0; i < s; ++ i)
-  {
-    res[i] = (*pts)[i];
-  }
-  res[s] = p;
-  delete [] * pts;
-  *pts = res;
-}
-
-void top::get_points(const IDraw & d, p_t ** pts, size_t & s)
-{
-  p_t p = d.begin(); //начало
-  extend(pts, s, p);
-  size_t delta = 1;
-  while (d.next(p) != d.begin())
-  {
-    p = d.next(p);
-    extend(pts, s + delta, p);
-    ++delta;
-    // p добавить в массив
-  }
-  s += delta;
-}
-
-size_t rows(top::frame_t fr)
-{
-  return (fr.bb.y - fr.aa.y + 1);
-}
-
-size_t cols(top::frame_t fr)
-{
-  return (fr.bb.x - fr.aa.x + 1);
-}
-
-top::frame_t top::build_frame(const p_t * pts, size_t s)
-{
-  if (!s)
-  {
-    throw std::logic_error("bad size");
-  }
-  int minx = pts[0].x, maxx = minx;
-  int miny = pts[0].y, maxy = miny;
-  for (size_t i = 1; i < s; ++i)
-  {
-    minx = std::min(minx, pts[i].x);
-    maxx = std::max(maxx, pts[i].x);
-    miny = std::min(miny, pts[i].y);
-    maxy = std::max(maxy, pts[i].y);
-  }
-  p_t aa{minx, miny};
-  p_t bb{maxx, maxy};
-  return {aa, bb};
-}
-
-char * top::build_canvas(frame_t fr, char fill)
-{
-  char * cnv = new char[rows(fr) * cols(fr)];
-  for (size_t i = 0; i < rows(fr) * cols(fr); ++i)
-  {
-    cnv[i] = fill;
-  }
-  return cnv;
-}
-
-void top::paint_canvas(char * cnv, frame_t fr, p_t p, char fill)
-{
-  int dx = p.x - fr.aa.x;
-  int dy = fr.bb.y - p.y;
-  cnv[dy * cols(fr) + dx] = fill;
-}
-
-void top::print_canvas(std::ostream & os, const char * cnv, frame_t fr)
-{
-  for (size_t i = 0; i < rows(fr); ++i)
-  {
-    for (size_t j = 0; j < cols(fr); ++j)
-    {
-      os << cnv[i * cols(fr) + j];
-    }
-    os << '\n';
-  }
-}
-
-top::Dot::Dot(p_t dd):
- IDraw(),
- o{dd}
-{}
 
 int main()
 {
